@@ -85,30 +85,156 @@
     let index = 0;
     const apply = () => {
       slides.forEach((s, i) => s.classList.toggle('active', i === index));
+      // sau khi thay slide, kiểm tra lại kích thước tiêu đề để vẫn giữ 1 dòng
+      try { fitHeroTitleToOneLine(); } catch (_) {}
     };
     apply();
     const prevBtn = document.querySelector('.slider-btn.prev');
     const nextBtn = document.querySelector('.slider-btn.next');
-    if (prevBtn) prevBtn.addEventListener('click', () => { index = (index - 1 + slides.length) % slides.length; apply(); });
-    if (nextBtn) nextBtn.addEventListener('click', () => { index = (index + 1) % slides.length; apply(); });
+    const goPrev = () => { index = (index - 1 + slides.length) % slides.length; apply(); };
+    const goNext = () => { index = (index + 1) % slides.length; apply(); };
+    if (prevBtn) prevBtn.addEventListener('click', goPrev);
+    if (nextBtn) nextBtn.addEventListener('click', goNext);
+    // hỗ trợ bàn phím
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    });
+
+    // Tự động chuyển slide mỗi 4 giây, dừng/tái lập khi tương tác
+    const AUTO_INTERVAL_MS = 4000;
+    let autoAdvanceTimer = window.setInterval(goNext, AUTO_INTERVAL_MS);
+    function resetAutoAdvance() {
+      window.clearInterval(autoAdvanceTimer);
+      autoAdvanceTimer = window.setInterval(goNext, AUTO_INTERVAL_MS);
+    }
+    ['click', 'keydown', 'touchstart'].forEach(evt => {
+      document.addEventListener(evt, resetAutoAdvance, { passive: true });
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        window.clearInterval(autoAdvanceTimer);
+      } else {
+        resetAutoAdvance();
+      }
+    });
   }
 
-  function setupGalleryToggle() {
-    const container = document.querySelector('#gallery');
+  function fitHeroTitleToOneLine() {
+    const container = document.querySelector('.hero-content');
     if (!container) return;
-    const buttons = container.querySelectorAll('.seg-btn');
-    const sets = container.querySelectorAll('.gallery-set');
-    const activate = (target) => {
-      sets.forEach(s => s.classList.toggle('active', s.getAttribute('data-set') === target));
-      buttons.forEach(b => b.classList.toggle('is-active', b.getAttribute('data-target') === target));
-      buttons.forEach(b => b.setAttribute('aria-selected', b.classList.contains('is-active') ? 'true' : 'false'));
-    };
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => activate(btn.getAttribute('data-target')));
-    });
-    // mặc định chọn gia đình
-    activate('family');
+    const title = container.querySelector('.title');
+    if (!title) return;
+    const MAX_SIZE = 54; // px
+    const MIN_SIZE = 14; // px an toàn hơn cho mobile rất nhỏ
+    // đặt về cỡ tối đa trước khi đo
+    title.style.fontSize = `${MAX_SIZE}px`;
+    const available = Math.max(0, container.clientWidth - 16);
+    // Thu nhỏ dần cho đến khi không tràn
+    let current = MAX_SIZE;
+    const guard = 20; // chống loop vô hạn
+    let count = 0;
+    while (title.scrollWidth > available && current > MIN_SIZE && count < guard) {
+      current -= 2; // giảm từng nấc 2px để mượt
+      title.style.fontSize = `${current}px`;
+      count++;
+    }
   }
+
+  function setupTitleFitting() {
+    const apply = () => fitHeroTitleToOneLine();
+    apply();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(apply).catch(() => apply());
+    }
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(apply, 120);
+    });
+    window.addEventListener('orientationchange', () => setTimeout(apply, 150));
+  }
+
+  function setupFireworks() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+    const canvas = document.createElement('canvas');
+    canvas.id = 'fireworksCanvas';
+    canvas.style.position = 'fixed';
+    canvas.style.inset = '0';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '4';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const devicePixelRatioSafe = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(window.innerWidth * devicePixelRatioSafe);
+      canvas.height = Math.floor(window.innerHeight * devicePixelRatioSafe);
+      ctx.setTransform(devicePixelRatioSafe, 0, 0, devicePixelRatioSafe, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const particles = [];
+    function spawnFirework(originX, originY) {
+      const palette = ['#f3d68a', '#c6a132', '#ffffff', '#c9ccd3', '#a8adb7'];
+      const particleCount = 36;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (i / particleCount) * Math.PI * 2 + Math.random() * 0.3;
+        const speed = 1.2 + Math.random() * 2.6;
+        particles.push({
+          x: originX,
+          y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          life: 60 + Math.floor(Math.random() * 30),
+          color: palette[Math.floor(Math.random() * palette.length)]
+        });
+      }
+    }
+
+    function renderFrame() {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.vx *= 0.985;
+        p.vy = p.vy * 0.985 + 0.02;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 1;
+        p.alpha = Math.max(0, p.life / 90);
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(renderFrame);
+    }
+    requestAnimationFrame(renderFrame);
+
+    const launch = () => {
+      const x = Math.random() * window.innerWidth * 0.9 + window.innerWidth * 0.05;
+      const y = Math.random() * window.innerHeight * 0.4 + window.innerHeight * 0.15;
+      spawnFirework(x, y);
+    };
+    launch();
+    let intervalId = window.setInterval(launch, 6000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        window.clearInterval(intervalId);
+      } else {
+        intervalId = window.setInterval(launch, 6000);
+      }
+    });
+  }
+
+  // Không cần toggle gallery nữa (đã gộp 1 lưới)
 
   function setupAudio() {
     const audio = document.getElementById('bgm');
@@ -130,9 +256,10 @@
     applyURLCustomizations();
     setupReveal();
     setupConfetti();
+    setupFireworks();
     setupImagesFallback();
     setupHeroSlider();
-    setupGalleryToggle();
+    setupTitleFitting();
     setupAudio();
   });
 })();

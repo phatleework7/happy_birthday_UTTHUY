@@ -2,7 +2,7 @@
   "name": "happy_birthday_utthuy",
   "version": "1.0.0",
   "private": true,
-  "description": "Trang chúc mừng sinh nhật sang trọng (Dì 1969) - static site",
+  "description": "Trang chúc mừng sinh nhật Dì - Út Thuý - người mà mình rất tôn trọng - static site",
   "scripts": {
     "dev": "vite --port 5173",
     "build": "vite build",
