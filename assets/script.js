@@ -84,7 +84,22 @@
     if (!slides.length) return;
     let index = 0;
     const apply = () => {
-      slides.forEach((s, i) => s.classList.toggle('active', i === index));
+      slides.forEach((s, i) => {
+        s.classList.toggle('active', i === index);
+        // Nếu ảnh ngang trên màn hình dọc nhỏ, chuyển sang contain để không bị crop
+        const img = s.querySelector('img');
+        if (img) {
+          const isPortraitViewport = window.innerHeight > window.innerWidth;
+          const isLandscapeImage = img.naturalWidth > img.naturalHeight;
+          if (isPortraitViewport && isLandscapeImage) {
+            img.classList.add('fit-contain');
+            img.style.objectPosition = '50% 50%';
+          } else {
+            img.classList.remove('fit-contain');
+            img.style.objectPosition = '';
+          }
+        }
+      });
       // sau khi thay slide, kiểm tra lại kích thước tiêu đề để vẫn giữ 1 dòng
       try { fitHeroTitleToOneLine(); } catch (_) {}
     };
@@ -118,6 +133,10 @@
         resetAutoAdvance();
       }
     });
+
+    // cập nhật chế độ contain khi xoay màn hình
+    window.addEventListener('orientationchange', () => setTimeout(apply, 150));
+    window.addEventListener('resize', () => setTimeout(apply, 150));
   }
 
   function fitHeroTitleToOneLine() {
@@ -157,13 +176,13 @@
 
   function setupFireworks() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
+    // Vẫn chạy nhưng nhẹ hơn khi người dùng bật Reduce Motion
     const canvas = document.createElement('canvas');
     canvas.id = 'fireworksCanvas';
     canvas.style.position = 'fixed';
     canvas.style.inset = '0';
     canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '4';
+    canvas.style.zIndex = '2000';
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
 
@@ -178,26 +197,27 @@
 
     const particles = [];
     function spawnFirework(originX, originY) {
-      const palette = ['#f3d68a', '#c6a132', '#ffffff', '#c9ccd3', '#a8adb7'];
-      const particleCount = 36;
+      const palette = prefersReducedMotion
+        ? ['#ffd166', '#fff1a8', '#ffffff']
+        : ['#ffd166', '#ff6b6b', '#66d9ff', '#ffffff'];
+      const particleCount = prefersReducedMotion ? 28 : 60;
       for (let i = 0; i < particleCount; i++) {
         const angle = (i / particleCount) * Math.PI * 2 + Math.random() * 0.3;
-        const speed = 1.2 + Math.random() * 2.6;
+        const speed = 1.6 + Math.random() * 3.2;
         particles.push({
           x: originX,
           y: originY,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           alpha: 1,
-          life: 60 + Math.floor(Math.random() * 30),
+          life: 70 + Math.floor(Math.random() * 40),
           color: palette[Math.floor(Math.random() * palette.length)]
         });
       }
     }
 
     function renderFrame() {
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
         p.vx *= 0.985;
@@ -207,13 +227,15 @@
         p.life -= 1;
         p.alpha = Math.max(0, p.life / 90);
         ctx.globalAlpha = p.alpha;
+        ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, prefersReducedMotion ? 1.8 : 3.2, 0, Math.PI * 2);
         ctx.fill();
         if (p.life <= 0) particles.splice(i, 1);
       }
       ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
       requestAnimationFrame(renderFrame);
     }
     requestAnimationFrame(renderFrame);
@@ -223,15 +245,24 @@
       const y = Math.random() * window.innerHeight * 0.4 + window.innerHeight * 0.15;
       spawnFirework(x, y);
     };
+    // hiệu ứng rõ ràng ngay khi vào trang: bắn 2 điểm
     launch();
-    let intervalId = window.setInterval(launch, 6000);
+    setTimeout(launch, 600);
+    let intervalId = window.setInterval(launch, prefersReducedMotion ? 9000 : 6000);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         window.clearInterval(intervalId);
       } else {
-        intervalId = window.setInterval(launch, 6000);
+        intervalId = window.setInterval(launch, prefersReducedMotion ? 9000 : 6000);
       }
     });
+
+    // bấm/tap để bắn ngay tại vị trí
+    document.addEventListener('click', (e) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      spawnFirework(x, y);
+    }, { passive: true });
   }
 
   // Không cần toggle gallery nữa (đã gộp 1 lưới)
