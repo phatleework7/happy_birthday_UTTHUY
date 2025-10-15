@@ -104,12 +104,8 @@
       try { fitHeroTitleToOneLine(); } catch (_) {}
     };
     apply();
-    const prevBtn = document.querySelector('.slider-btn.prev');
-    const nextBtn = document.querySelector('.slider-btn.next');
     const goPrev = () => { index = (index - 1 + slides.length) % slides.length; apply(); };
     const goNext = () => { index = (index + 1) % slides.length; apply(); };
-    if (prevBtn) prevBtn.addEventListener('click', goPrev);
-    if (nextBtn) nextBtn.addEventListener('click', goNext);
     // hỗ trợ bàn phím
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') goPrev();
@@ -123,7 +119,7 @@
       window.clearInterval(autoAdvanceTimer);
       autoAdvanceTimer = window.setInterval(goNext, AUTO_INTERVAL_MS);
     }
-    ['click', 'keydown', 'touchstart'].forEach(evt => {
+    ['keydown', 'touchstart'].forEach(evt => {
       document.addEventListener(evt, resetAutoAdvance, { passive: true });
     });
     document.addEventListener('visibilitychange', () => {
@@ -291,6 +287,23 @@
     setupImagesFallback();
     setupHeroSlider();
     setupTitleFitting();
+    // Thêm alt rỗng cho các ảnh không phải nội dung (ảnh do extension chèn) để tránh lỗi A11y
+    (function ensureAltAttributes() {
+      function apply(node) {
+        const imgs = (node instanceof HTMLImageElement) ? [node] : node.querySelectorAll('img');
+        imgs.forEach(img => {
+          if (!img.hasAttribute('alt')) {
+            img.setAttribute('alt', '');
+            img.setAttribute('aria-hidden', 'true');
+          }
+        });
+      }
+      apply(document);
+      const mo = new MutationObserver((muts) => {
+        muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) apply(n); }));
+      });
+      mo.observe(document.documentElement, { subtree: true, childList: true });
+    })();
     setupAudio();
   });
 })();

@@ -17,7 +17,7 @@
 
 /* Reset */
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { height: 100%; overflow-x: hidden; }
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -35,7 +35,7 @@ img { max-width: 100%; display: block; }
   width: min(1120px, 92vw);
   margin-inline: auto;
 }
-.section { padding: 64px 0; }
+.section { padding: 32px 0; }
 .section-title {
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 700;
@@ -92,17 +92,19 @@ img { max-width: 100%; display: block; }
   align-items: end;
   text-align: center;
 }
-.hero .container { padding: 48px 0 140px; }
+.hero .container { padding: 48px 0 140px; width: 100%; margin-inline: 0; }
+.hero .container.edges { padding-left: 0; padding-right: 0; margin-left: 0; margin-right: 0; width: 100vw; }
 .hero-content { 
   position: relative; 
   display: inline-block; 
   padding: 16px 18px; 
   border-radius: 16px; 
   background: rgba(255,255,255,0.62); 
+  -webkit-backdrop-filter: blur(4px); /* Safari */
   backdrop-filter: blur(4px); 
   box-shadow: 0 12px 30px #0001; 
   z-index: 2;
-  max-width: 96vw; /* đảm bảo không tràn màn hình */
+  max-width: calc(100vw - 8px); /* chừa mép 4px mỗi bên, sát hơn */
 }
 @media (min-width: 800px) { .hero-content { padding: 20px 24px; } }
 .brand .pill {
@@ -140,7 +142,7 @@ img { max-width: 100%; display: block; }
 
 .cta { display: flex; gap: 12px; justify-content: center; }
 .btn {
-  appearance: none; border: 0; cursor: pointer; user-select: none;
+  appearance: none; border: 0; cursor: pointer; -webkit-user-select: none; user-select: none;  
   padding: 12px 16px; border-radius: 10px; font-weight: 600;
   transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
 }
@@ -170,17 +172,25 @@ img { max-width: 100%; display: block; }
 .card p { margin: 0; color: #3a3b44; }
 
 /* Gallery */
-.gallery .container { width: min(1600px, 96vw); }
+.section.gallery { padding: 12px 0 12px; }
+.gallery .container { width: min(1600px, 100vw); margin-inline: 0; padding-inline: 8px; }
+/* Căn đều lề trái các tiêu đề như "Kỉ niệm đẹp" */
+#about .container, .about.section .container,
+#wishes .container, .wishes.section .container {
+  width: min(1600px, 100vw);
+  margin-inline: 0;
+  padding-inline: 8px;
+}
 .gallery .grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(2, 1fr); /* mobile: 2 cột cho cân đối */
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr); /* mobile: 2 cột, ảnh lớn hơn */
 }
 @media (min-width: 768px) {
-  .gallery .grid { grid-template-columns: repeat(3, 1fr); }
+  .gallery .grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
 }
 @media (min-width: 1200px) {
-  .gallery .grid { grid-template-columns: repeat(4, 1fr); }
+  .gallery .grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
 }
 .shot {
   position: relative; overflow: hidden; border-radius: 12px;
@@ -195,6 +205,14 @@ img { max-width: 100%; display: block; }
   .gallery .grid { gap: 20px; }
   .shot { border-radius: 14px; }
   .shot img { object-position: 50% 50%; }
+}
+
+/* Mobile tuning: ảnh lớn hơn một chút */
+@media (max-width: 767px) {
+  .gallery .container { width: 100vw; padding-inline: 8px; }
+  .gallery .grid { gap: 8px; }
+  .shot img { aspect-ratio: 1/1; }
+  .shot { border-radius: 10px; }
 }
 .shot.placeholder { display: grid; place-items: center; }
 .shot.placeholder::before {
@@ -226,7 +244,7 @@ img { max-width: 100%; display: block; }
 .letter .signature { margin: 8px 0 0; color: var(--muted); font-style: italic; }
 
 /* Footer */
-.footer { padding: 40px 0; color: #6b6d78; text-align: center; border-top: 1px solid #e6e9f1; background: #f7f8fb; }
+.footer { padding: 32px 0; color: #6b6d78; text-align: center; border-top: 1px solid #e6e9f1; background: #f7f8fb; }
 .footer .pill { margin-right: 8px; }
 .footer a { color: var(--gold-2); }
 
@@ -271,9 +289,10 @@ img { max-width: 100%; display: block; }
 .hero-slider { position: absolute; inset: 0; overflow: hidden; }
 .hero-slider .slides { position: absolute; inset: 0; }
 .hero-slider .slide { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+.hero-slider .slide .slide-fill { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(18px) brightness(0.9); transform: scale(1.08); z-index: 0; }
 .hero-slider .slide.active { opacity: 1; }
-.hero-slider img { width: 100%; height: 100%; object-fit: cover; }
-.hero-slider img.fit-contain { object-fit: contain; object-position: 50% 50% !important; background: #ffffff; }
+.hero-slider img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: cover; }
+.hero-slider img.fit-contain { object-fit: contain; object-position: 50% 50% !important; background: transparent; }
 .hero-overlay { display: none !important; }
 
 /* Tùy chọn canh khuôn mặt cho ảnh nền */
@@ -281,36 +300,34 @@ img { max-width: 100%; display: block; }
 .focus-bottom { object-position: 50% 80% !important; }
 .focus-left   { object-position: 20% 50% !important; }
 .focus-right  { object-position: 80% 50% !important; }
-.slider-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; }
-.slider-btn.prev { left: 12px; }
-.slider-btn.next { right: 12px; }
+/* slider-btn removed */
 
 /* Hero foreground photos at bottom */
-.hero-photos { position: absolute; left: 0; right: 0; bottom: 8px; height: 120px; pointer-events: none; z-index: 1; }
-.hero-photo { position: absolute; bottom: 0; width: 140px; height: 100%; background-size: cover; background-position: center; border-radius: 12px; box-shadow: 0 10px 30px #0003; border: 1px solid #ffffffcc; opacity: .95; }
-.hero-photo.p1 { left: 6vw; background-image: url('images/photo-1.jpg'); transform: rotate(-2deg); }
-.hero-photo.p2 { left: 24vw; background-image: url('images/photo-2.jpg'); transform: rotate(2deg); }
-.hero-photo.p3 { left: 42vw; background-image: url('images/photo-3.jpg'); transform: rotate(-1deg); }
-.hero-photo.p4 { left: 60vw; background-image: url('images/photo-4.jpeg'); transform: rotate(2deg); }
-.hero-photo.p5 { left: 78vw; background-image: url('images/photo-5.jpg'); transform: rotate(-2deg); }
-.hero-photo.p6 { left: 96vw; background-image: url('images/photo-6.jpg'); transform: rotate(1deg); }
-.hero-photo.p7 { left: 114vw; background-image: url('images/photo-7.jpg'); transform: rotate(-1deg); }
-.hero-photo.p8 { left: 132vw; background-image: url('images/photo-8.jpg'); transform: rotate(1.5deg); }
+.hero-photos { position: absolute; left: 0; right: 0; bottom: 8px; height: 120px; pointer-events: none; z-index: 1; display: flex; gap: 8px; justify-content: flex-start; align-items: flex-end; padding: 0 0; }
+.hero-photo { position: relative; bottom: 0; width: 140px; height: 100%; background-size: cover; background-position: center; border-radius: 12px; box-shadow: 0 10px 30px #0003; border: 1px solid #ffffffcc; opacity: .95; }
+.hero-photo.p1 { background-image: url('images/photo-1.jpg'); transform: rotate(-2deg); }
+.hero-photo.p2 { background-image: url('images/photo-2.jpg'); transform: rotate(2deg); }
+.hero-photo.p3 { background-image: url('images/photo-3.jpg'); transform: rotate(-1deg); }
+.hero-photo.p4 { background-image: url('images/photo-4.jpeg'); transform: rotate(2deg); }
+.hero-photo.p5 { background-image: url('images/photo-5.jpg'); transform: rotate(-2deg); }
+.hero-photo.p6 { background-image: url('images/photo-6.jpg'); transform: rotate(1deg); }
+.hero-photo.p7 { background-image: url('images/photo-7.jpg'); transform: rotate(-1deg); }
+.hero-photo.p8 { background-image: url('images/photo-8.jpg'); transform: rotate(1.5deg); }
 @media (min-width: 800px) {
-  .hero-photos { bottom: 20px; height: 160px; }
+  .hero-photos { bottom: 20px; height: 160px; gap: 10px; }
   .hero-photo { width: 200px; }
-  .hero-photo.p1 { left: 4vw; }
-  .hero-photo.p2 { left: 16vw; }
-  .hero-photo.p3 { left: 28vw; }
-  .hero-photo.p4 { left: 40vw; }
-  .hero-photo.p5 { left: 52vw; }
-  .hero-photo.p6 { left: 64vw; }
-  .hero-photo.p7 { left: 76vw; }
-  .hero-photo.p8 { left: 88vw; }
 }
 @media (max-width: 420px) {
   .hero-photos { height: 96px; }
   .hero-photo { width: 112px; border-radius: 10px; }
+}
+
+/* Căn lại vị trí ảnh trang trí để không bị cắt ở mép trên màn nhỏ */
+@media (max-width: 420px) {
+  .hero-photo { width: 96px; }
+  .hero-photo.p1 { left: 5vw; transform: rotate(-2deg); }
+  .hero-photo.p2 { left: 37vw; transform: rotate(2deg); }
+  .hero-photo.p3 { left: 69vw; transform: rotate(-1deg); }
 }
 @media (max-width: 799px) {
   .hero-photo.p6, .hero-photo.p7, .hero-photo.p8 { display: none; }
