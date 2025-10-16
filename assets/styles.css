@@ -330,6 +330,18 @@ img { max-width: 100%; display: block; }
   .hero-photo.p3 { left: 69vw; transform: rotate(-1deg); }
 }
 @media (max-width: 799px) {
+  /* Hiệu ứng ảnh chồng đè kiểu thẻ ảnh trên mobile */
+  .hero-photos {
+    display: block; bottom: 12px; height: 110px; padding: 0;
+  }
+  .hero-photo {
+    position: absolute !important; left: 0; width: 32vw; height: 100%;
+  }
+  .hero-photo.p1 { left: 2vw;  transform: rotate(-3deg); z-index: 5; }
+  .hero-photo.p2 { left: 18vw; transform: rotate(2deg);  z-index: 6; }
+  .hero-photo.p3 { left: 34vw; transform: rotate(-2deg); z-index: 7; }
+  .hero-photo.p4 { left: 50vw; transform: rotate(3deg);  z-index: 8; }
+  .hero-photo.p5 { left: 66vw; transform: rotate(-1deg); z-index: 9; }
   .hero-photo.p6, .hero-photo.p7, .hero-photo.p8 { display: none; }
 }
 @media (min-width: 800px) and (max-width: 1199px) {

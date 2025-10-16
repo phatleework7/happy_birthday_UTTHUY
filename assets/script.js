@@ -86,18 +86,20 @@
     const apply = () => {
       slides.forEach((s, i) => {
         s.classList.toggle('active', i === index);
-        // Nếu ảnh ngang trên màn hình dọc nhỏ, chuyển sang contain để không bị crop
-        const img = s.querySelector('img');
-        if (img) {
-          const isPortraitViewport = window.innerHeight > window.innerWidth;
-          const isLandscapeImage = img.naturalWidth > img.naturalHeight;
-          if (isPortraitViewport && isLandscapeImage) {
-            img.classList.add('fit-contain');
-            img.style.objectPosition = '50% 50%';
-          } else {
-            img.classList.remove('fit-contain');
-            img.style.objectPosition = '';
-          }
+        const imgs = s.querySelectorAll('img');
+        const mainImg = imgs[imgs.length - 1];
+        if (!mainImg) return;
+        const vpPortrait = window.innerHeight > window.innerWidth;
+        const iw = mainImg.naturalWidth || 0;
+        const ih = mainImg.naturalHeight || 0;
+        const isLandscapeImage = iw > ih && iw > 0 && ih > 0;
+        // Mobile dọc + ảnh ngang => contain ở giữa; Ảnh dọc => cover giữ người
+        if (vpPortrait && isLandscapeImage) {
+          mainImg.classList.add('fit-contain');
+          mainImg.style.objectPosition = '50% 50%';
+        } else {
+          mainImg.classList.remove('fit-contain');
+          mainImg.style.objectPosition = '50% 25%'; // nhấn vùng trên (mặt) cho ảnh dọc
         }
       });
       // sau khi thay slide, kiểm tra lại kích thước tiêu đề để vẫn giữ 1 dòng
