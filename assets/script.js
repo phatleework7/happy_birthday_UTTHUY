@@ -270,15 +270,45 @@
     const btn = document.getElementById('audioBtn');
     if (!audio || !btn) return;
     let available = false;
-    audio.addEventListener('canplay', () => {
-      available = true; btn.hidden = false;
-    });
-    audio.addEventListener('error', () => { btn.hidden = true; });
+    // Luôn hiển thị nút để người dùng có thể kích phát nhạc
+    btn.hidden = false;
+    const markAvailable = () => { available = true; btn.hidden = false; };
+    audio.addEventListener('loadedmetadata', markAvailable, { once: true });
+    audio.addEventListener('canplay', markAvailable);
+    audio.addEventListener('canplaythrough', markAvailable);
+    audio.addEventListener('error', () => { /* vẫn giữ nút để thử lại */ });
+    const tryPlay = async () => {
+      try {
+        // Bật tiếng nếu đang mute do autoplay policy
+        if (audio.muted) audio.muted = false;
+        await audio.play();
+        btn.textContent = '❚❚';
+      } catch (_) { /* user gesture required */ }
+    };
+    // iOS cần thao tác người dùng: play sau lần chạm đầu tiên
+    document.addEventListener('touchend', () => { if (audio.paused) tryPlay(); }, { once: true, passive: true });
+    document.addEventListener('click', () => { if (audio.paused) tryPlay(); }, { once: true });
+
     btn.addEventListener('click', () => {
-      if (!available) return;
-      if (audio.paused) { audio.play(); btn.textContent = '❚❚'; }
+      if (audio.paused) { tryPlay(); }
       else { audio.pause(); btn.textContent = '♪'; }
     });
+    // Cố gắng tự play không tiếng (autoplay muted) lúc vào trang nhiều lần dự phòng
+    const autoTries = [100, 400, 1200];
+    autoTries.forEach(t => setTimeout(() => { try { audio.play().catch(()=>{}); } catch (_) {} }, t));
+
+    // Nếu sau 2s vẫn chưa phát (hoặc đang mute), hiển thị tip nhỏ "Chạm để bật nhạc"
+    setTimeout(() => {
+      if (!audio || (!audio.paused && audio.muted === false)) return;
+      const tip = document.createElement('div');
+      tip.textContent = 'Chạm để bật nhạc';
+      tip.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:74px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;z-index:3000;box-shadow:0 6px 16px rgba(0,0,0,.25)';
+      document.body.appendChild(tip);
+      const removeTip = () => { try { tip.remove(); } catch(_){} };
+      const oncePlay = () => { removeTip(); document.removeEventListener('click', oncePlay); document.removeEventListener('touchend', oncePlay); };
+      document.addEventListener('click', oncePlay, { once: true });
+      document.addEventListener('touchend', oncePlay, { once: true, passive: true });
+    }, 2000);
   }
 
   document.addEventListener('DOMContentLoaded', () => {

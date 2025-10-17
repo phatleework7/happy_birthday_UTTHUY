@@ -162,10 +162,18 @@
     </footer>
 
     <!-- Nhạc nền (tùy chọn): thêm file assets/audio/happy-birthday.mp3 để dùng -->
-    <audio id="bgm" preload="none">
+    <audio id="bgm" preload="auto" playsinline autoplay muted loop>
       <source src="assets/audio/happy-birthday.mp3" type="audio/mpeg">
     </audio>
     <button id="audioBtn" class="audio-btn" aria-label="Phát/Dừng nhạc" hidden>♪</button>
+
+    <!-- Overlay yêu cầu thao tác để bật tiếng nhạc theo chính sách trình duyệt -->
+    <div id="startOverlay" class="start-overlay" hidden>
+      <div class="start-card">
+        <p>Chạm để bật nhạc và hiệu ứng</p>
+        <button id="startBtn" class="btn btn-gold">Bắt đầu</button>
+      </div>
+    </div>
 
     <script src="assets/script.js?v=1" defer></script>
   </body>
